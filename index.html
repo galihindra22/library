@@ -6,78 +6,185 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <style>
-        *{
+        div, h1{
             margin: 0;
         }
-        body{
+
+        dialog::backdrop {
+            background-color: gray;
+            opacity: 0.75;
+        }
+
+        .library-container {
             display: grid;
-            min-height: 100vh;
-            grid-template-columns: repeat(auto-fit, 160px);
+            grid-template-columns: repeat(auto-fit, 200px);
             gap: 10px;
             justify-content: center;
             align-content: center;
-            
+
         }
-        p{
+
+        .card {
+            background-color: aqua;
+        }
+
+        p {
             padding: 10px;
-            
+            text-align: center;
+
         }
+
+        form{
+            display: flex;
+            flex-direction: column;
+        }
+
     </style>
 </head>
 
 <body>
+    <dialog>
+        <button autofocus>Close</button>
+        <form id="add-book">
+            <h2>Add Book</h2>
+            <label for="title">Title</label>
+            <input type="text" name="title" id="title" required>
+            <label for="author">Author</label>
+            <input type="text" name="author" id="author" required>
+            <label for="pages">No. of pages</label>
+            <input type="tel" name="pages" id="pages" required>
+            <fieldset>
+                <legend>Have you read the book?</legend>
+                <label for="yes_answer">Yes</label>
+                <input type="radio" name="question" id="yes_answer">
+                <label for="no_answer">No</label>
+                <input type="radio" name="question" id="no_answer">
+            </fieldset>
+            <button type="submit" id="submit-button">Submit</button>
+        </form>
 
+    </dialog>
+    <button>New Book</button>
+    <div class="library-container"></div>
+    
 </body>
 <script>
     const myLibrary = [];
+    const dialog = document.querySelector("dialog");
+    const showButton = document.querySelector("dialog + button");
+    const closeButton = document.querySelector("dialog button");
+    const form = document.querySelector("#add-book");
+    const delButton = document.getElementById("del-button");
 
-    function Book(title, author, pages, isRead) {
+    form.addEventListener("submit", submitClick);
+
+    showButton.addEventListener("click", () => {
+        dialog.showModal();
+    });
+    closeButton.addEventListener("click", () => {
+        dialog.close();
+    });
+
+    function submitClick(event){
+        event.preventDefault();
+        const title = document.querySelector("#title").value;
+        const author = document.querySelector("#author").value;
+        const pages = document.querySelector("#pages").value;
+        const isRead = document.querySelector("#yes_answer").checked;
+
+        addBookToLibrary(title, author, pages, isRead);
+        display();
+
+        form.reset();
+        dialog.close();
+    }
+    
+
+    function Book(title, author, pages, isRead, id) {
         if (!new.target) {
             throw Error("You must use the 'new' operator to call the constructor");
         }
         this.title = title;
         this.author = author;
         this.pages = pages;
-        if (isRead === false) {
-            this.isRead = "not read yet"
-        }
-        else if (isRead) {
-            this.isRead = "has been read"
-        }
+        this.id = id;
+        this.isRead = isRead;
         this.info = function () {
             console.log(`${this.title} by ${this.author}, ${this.pages} pages, ${this.isRead}`);
         };
     }
     function addBookToLibrary(title, author, pages, isRead) {
-        const book = new Book(title, author, pages, isRead);
+        const randId = crypto.randomUUID();
+        const book = new Book(title, author, pages, isRead, randId);
         myLibrary.push(book);
     }
     function display() {
+        const container = document.querySelector('.library-container');
+        container.innerHTML = ''
         myLibrary.forEach(element => {
-            const cards = document.createElement('div');
+            const card = document.createElement('div');
             const author = document.createElement('p');
             const title = document.createElement('p');
             const pages = document.createElement('p');
             const isRead = document.createElement('p');
+            const delButton = document.createElement('button');
+            const toggleRead = document.createElement('button');
 
+            delButton.id = "del-button";
+            card.dataset.id = element.id;
+
+            toggleRead.textContent = "Toggle Read";
             author.textContent = element.author;
             title.textContent = element.title;
             pages.textContent = element.pages;
-            isRead.textContent = element.isRead;
+            if(element.isRead){
+                isRead.textContent = "has been read"
+            }
+            else{
+                isRead.textContent = "not read yet"
+            }
+            delButton.textContent = "Delete Book";
 
-            cards.style.backgroundColor = 'aqua';
+            card.classList.add('card');
 
-            cards.appendChild(title);
-            cards.appendChild(author);
-            cards.appendChild(pages);
-            cards.appendChild(isRead);
-            document.body.appendChild(cards);
+            card.appendChild(title);
+            card.appendChild(author);
+            card.appendChild(pages);
+            card.appendChild(isRead);
+            card.appendChild(delButton);
+            card.appendChild(toggleRead);
+            container.appendChild(card);
+
+            delButton.addEventListener("click", removeBook);
+            toggleRead.addEventListener("click", () => {
+                element.toggle();
+                display();
+            });
         });
     }
-    
-    addBookToLibrary("The Hobbit", "J.R.R. Tolkien", 295, false);
+    Book.prototype.toggle = function(){
+        if(this.isRead){
+            this.isRead =false;
+        }
+        else{
+            this.isRead = true;   
+        }
+    };
+    function removeBook(event){
+        const targetElement = event.target.closest('.card');
+        const targetId = targetElement.dataset.id;
+
+        const index = myLibrary.findIndex(book => book.id === targetId);
+        if(index !== -1){
+            myLibrary.splice(index, 1);
+        }
+
+        display();
+    }
+    addBookToLibrary("The Hobbit", "J.R.R. Tolkien", 295, true);
     addBookToLibrary("Harry Potter", "J. K. Rowling", 766, false);
     display();
+    console.table(myLibrary)
 </script>
 
 </html>
