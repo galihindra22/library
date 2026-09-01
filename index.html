@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <style>
-        div, h1{
+        div,
+        h1 {
             margin: 0;
         }
 
@@ -34,49 +35,134 @@
 
         }
 
-        form{
+        form {
             display: flex;
             flex-direction: column;
         }
-
     </style>
 </head>
 
 <body>
-    <dialog>
-        <button autofocus>Close</button>
+    <dialog id="book-dialog">
+        <button type="button" id="close-dialog" autofocus>Close</button>
         <form id="add-book">
             <h2>Add Book</h2>
             <label for="title">Title</label>
             <input type="text" name="title" id="title" required>
+
             <label for="author">Author</label>
             <input type="text" name="author" id="author" required>
+
             <label for="pages">No. of pages</label>
             <input type="tel" name="pages" id="pages" required>
             <fieldset>
                 <legend>Have you read the book?</legend>
                 <label for="yes_answer">Yes</label>
-                <input type="radio" name="question" id="yes_answer">
+                <input type="radio" name="readStatus" id="yes_answer" value="yes" required>
                 <label for="no_answer">No</label>
-                <input type="radio" name="question" id="no_answer">
+                <input type="radio" name="readStatus" id="no_answer" value="no">
             </fieldset>
             <button type="submit" id="submit-button">Submit</button>
         </form>
-
     </dialog>
-    <button>New Book</button>
+    <button id="new-book-btn">New Book</button>
     <div class="library-container"></div>
-    
+
 </body>
 <script>
-   class Book {
-        constructor(title, author, pages, isRead){
+    class Library {
+        constructor() {
+            this.books = [];
+            this.container = document.querySelector(".library-container")
+        }
+        addBook(book) {
+            this.books.push(book);
+            this.display();
+        }
+        removeBook(id) {
+            this.books = this.books.filter(book => book.id !== id);
+            this.display();
+        }
+        display() {
+            this.container.innerHTML = "";
+            this.books.forEach(book => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.dataset.id = book.id;
+
+                const title = document.createElement('p');
+                title.textContent = book.title;
+
+                const author = document.createElement('p');
+                author.textContent = book.author;
+
+                const pages = document.createElement('p');
+                pages.textContent = `${book.pages} pages`;
+
+                const isRead = document.createElement('p');
+                isRead.textContent = book.isRead ? 'Has been read' : 'Not read yet';
+
+                const delButton = document.createElement('button');
+                delButton.textContent = 'Delete';
+                delButton.addEventListener('click', () => this.removeBook(book.id));
+
+                const toggleRead = document.createElement('button');
+                toggleRead.textContent = 'Toggle Read';
+                toggleRead.addEventListener('click', () => {
+                    book.toggleRead();
+                    this.display();
+                });
+
+                card.append(title, author, pages, isRead, delButton, toggleRead);
+                this.container.appendChild(card);
+            });
+        }
+    }
+    class Book {
+        constructor(title, author, pages, isRead) {
             this.title = title;
             this.author = author;
             this.pages = pages;
             this.isRead = isRead;
+            this.id = crypto.randomUUID();
         }
-   }
+        toggleRead() {
+            this.isRead = !this.isRead;
+        }
+    }
+    const myLibrary = new Library();
+    // UI & Modal Elements
+    const dialog = document.querySelector("#book-dialog");
+    const newBookBtn = document.querySelector("#new-book-btn");
+    const closeBtn = document.querySelector("#close-dialog");
+    const form = document.querySelector("#add-book");
+
+    // 1. Open Modal
+    newBookBtn.addEventListener("click", () => {
+        dialog.showModal();
+    });
+
+    // 2. Close Modal
+    closeBtn.addEventListener("click", () => {
+        dialog.close();
+    });
+
+    // 3. Handle Form Submission
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const title = document.querySelector("#title").value;
+        const author = document.querySelector("#author").value;
+        const pages = document.querySelector("#pages").value;
+        const isRead = document.querySelector('input[name="readStatus"]:checked').value === "yes";
+
+        const newBook = new Book(title, author, pages, isRead);
+        myLibrary.addBook(newBook);
+
+        form.reset();
+        dialog.close();
+    });
+
 </script>
 
 </html>
