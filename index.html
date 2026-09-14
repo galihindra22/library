@@ -163,6 +163,38 @@
         dialog.close();
     });
 
+    function initValidation(formElement) {
+        const errorMap = {
+            title: "I am expecting a title!",
+            author: "Please enter the author's name!",
+            pages: "Specify the page count!"
+        };
+        Object.entries(errorMap).forEach(([name, message]) => {
+            const input = formElement.elements[name];
+            if (input && input.validity.valueMissing) {
+                input.setCustomValidity(message);
+            }
+        });
+        formElement.addEventListener("input", (e) => {
+            const message = errorMap[e.target.name];
+            if (!message) return;
+
+            if (e.target.validity.valueMissing) {
+                e.target.setCustomValidity(message);
+            } else {
+                e.target.setCustomValidity("");
+            }
+        })
+        formElement.addEventListener("reset", () => {
+            setTimeout(() => {
+                Object.entries(errorMap).forEach(([name, message]) => {
+                    const input = formElement.elements[name];
+                    if (input && input.validity.valueMissing) input.setCustomValidity(message);
+                });
+            }, 0);
+        });
+    }
+    initValidation(document.querySelector("#add-book"));
 </script>
 
 </html>
